@@ -1,0 +1,47 @@
+{
+  "request": {
+    "query": "How has the number of Pembrolizumab trials changed over time?",
+    "drug_name": "Pembrolizumab",
+    "start_year": 2010,
+    "end_year": 2024
+  },
+  "response": {
+    "visualization": {
+      "type": "time_series",
+      "title": "Trials over time — Pembrolizumab",
+      "encoding": {
+        "x": { "field": "year",  "type": "quantitative", "title": "Year" },
+        "y": { "field": "count", "type": "quantitative", "title": "Number of Trials" }
+      },
+      "data": [
+        { "year": 2010, "count": 3 },
+        { "year": 2011, "count": 7 },
+        { "year": 2012, "count": 18 },
+        { "year": 2013, "count": 34 },
+        { "year": 2014, "count": 67 },
+        { "year": 2015, "count": 112 },
+        { "year": 2016, "count": 178 },
+        { "year": 2017, "count": 214 },
+        { "year": 2018, "count": 243 },
+        { "year": 2019, "count": 267 },
+        { "year": 2020, "count": 198 },
+        { "year": 2021, "count": 221 },
+        { "year": 2022, "count": 238 },
+        { "year": 2023, "count": 195 },
+        { "year": 2024, "count": 87 }
+      ]
+    },
+    "meta": {
+      "source": "clinicaltrials.gov",
+      "llm_used": false,
+      "llm_model": null,
+      "parsed_intent": "time_series",
+      "filters": {
+        "drug_name": "Pembrolizumab",
+        "start_year": 2010,
+        "end_year": 2024
+      },
+      "time_granularity": "year"
+    }
+  }
+}

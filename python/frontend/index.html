@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClinicalTrials.gov Intelligence</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <style>
+    :root {
+      --primary:       #2563eb;
+      --primary-dark:  #1d4ed8;
+      --primary-light: #eff6ff;
+      --success:       #059669;
+      --amber:         #d97706;
+      --purple:        #7c3aed;
+      --bg:            #f1f5f9;
+      --card:          #ffffff;
+      --text:          #1e293b;
+      --muted:         #64748b;
+      --border:        #e2e8f0;
+      --radius:        10px;
+      --shadow:        0 1px 3px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.04);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #1d4ed8 100%);
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    header svg { flex-shrink: 0; }
+    header h1 { font-size: 19px; font-weight: 700; letter-spacing: -.3px; }
+    header p  { font-size: 12.5px; opacity: .8; margin-top: 1px; }
+
+    /* ── Layout ── */
+    main {
+      max-width: 980px;
+      margin: 28px auto;
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .card-header {
+      padding: 13px 20px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 11.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .card-body { padding: 20px; }
+
+    /* ── Form ── */
+    label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 14px;
+      color: var(--text);
+      background: #fff;
+      transition: border-color .15s, box-shadow .15s;
+      font-family: inherit;
+      appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+    textarea { resize: vertical; }
+    #query-input { font-size: 15px; padding: 13px 15px; }
+
+    /* ── Grid ── */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+    /* ── Examples ── */
+    .examples-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin: 16px 0 8px;
+    }
+    .examples-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+    .ex-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 13px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1px solid #bfdbfe;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .ex-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* ── Advanced toggle ── */
+    .adv-toggle {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 0;
+    }
+    .adv-toggle:hover { text-decoration: underline; }
+    #adv-panel { display: none; margin-top: 14px; }
+
+    /* ── Submit row ── */
+    .submit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 18px;
+      gap: 10px;
+    }
+    #submit-hint { font-size: 12px; color: var(--muted); }
+    #run-btn {
+      padding: 10px 26px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    #run-btn:hover:not(:disabled) { background: var(--primary-dark); }
+    #run-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error ── */
+    #error-box {
+      display: none;
+      padding: 13px 16px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius);
+      color: #991b1b;
+      font-size: 13.5px;
+    }
+
+    /* ── Results card ── */
+    #results { display: none; }
+
+    .meta-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 11px 18px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .b-llm     { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .b-heur    { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .b-source  { background: var(--primary-light); color: var(--primary-dark); border: 1px solid #bfdbfe; }
+    .b-intent  { background: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe; }
+    .b-filter  { background: #f8fafc; color: var(--muted); border: 1px solid var(--border); }
+    .meta-time { margin-left: auto; font-size: 12px; color: var(--muted); }
+
+    /* ── AI indicator banner ── */
+    #ai-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+    #ai-banner.is-ai {
+      background: #fffbeb;
+      border-left: 4px solid #f59e0b;
+      color: #78350f;
+    }
+    #ai-banner.is-heur {
+      background: #f0fdf4;
+      border-left: 4px solid #22c55e;
+      color: #14532d;
+    }
+    #ai-banner .ai-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: .01em;
+    }
+    #ai-banner.is-ai   .ai-pill { background: #fde68a; color: #92400e; }
+    #ai-banner.is-heur .ai-pill { background: #bbf7d0; color: #166534; }
+    #ai-banner .ai-desc { font-size: 12px; opacity: .8; }
+
+    .chart-title {
+      padding: 16px 20px 4px;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .chart-subtitle {
+      padding: 0 20px 10px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    #chart-area { padding: 12px 16px 20px; min-height: 420px; }
+    #chart-vl { width: 100%; }
+    #chart-d3 {
+      width: 100%;
+      height: 500px;
+      position: relative;
+      display: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #chart-d3 svg { display: block; background: #fafbfc; }
+
+    .d3-tooltip {
+      position: absolute;
+      background: rgba(15,23,42,.88);
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .12s;
+      max-width: 220px;
+      word-wrap: break-word;
+      z-index: 10;
+    }
+    .net-overlay {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 6px;
+      z-index: 5;
+    }
+    .net-ctrl {
+      padding: 4px 10px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11.5px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+    .net-ctrl:hover { background: var(--bg); }
+
+    .net-legend {
+      display: flex;
+      gap: 18px;
+      padding: 10px 18px;
+      border-top: 1px solid var(--border);
+      background: #f8fafc;
+      font-size: 12px;
+      color: var(--muted);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .leg-dot {
+      display: inline-block;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    /* ── JSON section ── */
+    .json-toggle {
+      padding: 10px 18px;
+      border-top: 1px solid var(--border);
+      background: #f8fafc;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .json-toggle:hover { background: #f1f5f9; }
+    #json-body { display: none; }
+    #json-pre {
+      padding: 16px 20px;
+      background: #0f172a;
+      color: #94a3b8;
+      font-size: 12px;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      overflow: auto;
+      max-height: 340px;
+      white-space: pre;
+      line-height: 1.55;
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+    #json-pre .key   { color: #7dd3fc; }
+    #json-pre .str   { color: #86efac; }
+    #json-pre .num   { color: #fda4af; }
+    #json-pre .bool  { color: #fbbf24; }
+
+    /* ── Info cards ── */
+    .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .info-item { text-align: center; padding: 8px 0; }
+    .info-icon { font-size: 26px; margin-bottom: 8px; }
+    .info-title { font-weight: 600; margin-bottom: 4px; font-size: 14px; }
+    .info-desc  { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    footer a { color: var(--primary); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      .g2, .g3, .g4 { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+      header { padding: 14px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+    <rect width="32" height="32" rx="8" fill="rgba(255,255,255,.15)"/>
+    <path d="M16 6v20M6 16h20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="16" cy="16" r="4" fill="white" opacity=".9"/>
+  </svg>
+  <div>
+    <h1>ClinicalTrials.gov Intelligence</h1>
+    <p>AI-powered visualization of clinical trial data · Backed by the ClinicalTrials.gov v2 API</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Query card ── -->
+  <div class="card" id="query-card">
+    <div class="card-header">
+      <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Ask a Question
+    </div>
+    <div class="card-body">
+
+      <label for="query-input">Natural language query <span style="color:var(--muted);font-weight:400">(Ctrl+Enter to run)</span></label>
+      <textarea id="query-input" rows="2"
+        placeholder="e.g. How has the number of Pembrolizumab trials changed over time?">How has the number of trials for this drug changed over time?</textarea>
+
+      <div class="examples-label">Quick examples</div>
+      <div class="examples-wrap" id="examples-wrap"></div>
+
+      <button class="adv-toggle" onclick="toggleAdv()">
+        <span id="adv-arrow">▼</span> Advanced filters
+      </button>
+
+      <div id="adv-panel">
+        <div class="g2" style="margin-top:10px">
+          <div><label>Drug / Intervention</label>
+            <input id="f-drug" placeholder="e.g. Pembrolizumab, Ozempic" /></div>
+          <div><label>Condition / Disease</label>
+            <input id="f-cond" placeholder="e.g. lung cancer, diabetes" /></div>
+        </div>
+        <div class="g3" style="margin-top:10px">
+          <div><label>Sponsor</label>
+            <input id="f-sponsor" placeholder="e.g. Merck, NIH" /></div>
+          <div><label>Trial Phase</label>
+            <select id="f-phase">
+              <option value="">All phases</option>
+              <option>PHASE1</option><option>PHASE2</option>
+              <option>PHASE3</option><option>PHASE4</option>
+            </select>
+          </div>
+          <div><label>Country</label>
+            <input id="f-country" placeholder="e.g. United States" /></div>
+        </div>
+        <div class="g4" style="margin-top:10px">
+          <div><label>Start year</label>
+            <input id="f-start" type="number" value="2010" min="1990" max="2025" /></div>
+          <div><label>End year</label>
+            <input id="f-end" type="number" value="2024" min="1990" max="2025" /></div>
+        </div>
+      </div>
+
+      <div class="submit-row">
+        <span id="submit-hint"></span>
+        <button id="run-btn" onclick="runQuery()">
+          <span id="btn-icon">→</span>
+          <span id="btn-text">Run Query</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Error box ── -->
+  <div id="error-box"></div>
+
+  <!-- ── Results card ── -->
+  <div class="card" id="results">
+    <div class="meta-bar" id="meta-bar"></div>
+    <div id="ai-banner"></div>
+    <div class="chart-title" id="chart-title"></div>
+    <div class="chart-subtitle" id="chart-subtitle"></div>
+    <div id="chart-area">
+      <div id="chart-vl"></div>
+      <div id="chart-d3">
+        <div class="net-overlay">
+          <button class="net-ctrl" onclick="resetZoom()">Reset zoom</button>
+        </div>
+        <div class="d3-tooltip" id="d3-tooltip"></div>
+      </div>
+    </div>
+    <div id="net-legend" class="net-legend" style="display:none">
+      <span><span class="leg-dot" style="background:#2563eb"></span>Sponsor</span>
+      <span><span class="leg-dot" style="background:#059669"></span>Condition</span>
+      <span><span class="leg-dot" style="background:#d97706"></span>Drug / Intervention</span>
+      <span style="margin-left:auto">Drag nodes · Scroll to zoom · Hover for details</span>
+    </div>
+    <div class="json-toggle" onclick="toggleJson()">
+      <span id="json-arrow">▶</span> Raw JSON output
+    </div>
+    <div id="json-body"><pre id="json-pre"></pre></div>
+  </div>
+
+  <!-- ── Info card (shown before first query) ── -->
+  <div class="card" id="info-card">
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-icon">📊</div>
+          <div class="info-title">5 Chart Types</div>
+          <div class="info-desc">Time series, bar charts, histograms, and interactive force-directed network graphs</div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">🤖</div>
+          <div class="info-title">LLM-Powered</div>
+          <div class="info-desc">GPT-4o parses your query, extracts intent and filters, and picks the right visualization — no manual selection needed</div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">🏥</div>
+          <div class="info-title">Live Data</div>
+          <div class="info-desc">Every query hits the ClinicalTrials.gov v2 API in real time — always up to date</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Data from <a href="https://clinicaltrials.gov" target="_blank" rel="noopener">ClinicalTrials.gov</a> ·
+  Visualizations via <a href="https://vega.github.io/vega-lite/" target="_blank" rel="noopener">Vega-Lite</a> &amp; <a href="https://d3js.org" target="_blank" rel="noopener">D3.js</a>
+</footer>
+
+<script>
+// ─── Example presets ──────────────────────────────────────────────────────────
+const EXAMPLES = [
+  { label: 'Pembrolizumab timeline', emoji: '📈',
+    q: 'How has the number of Pembrolizumab trials changed over time?',
+    drug: 'Pembrolizumab', cond: '', start: 2010, end: 2024 },
+  { label: 'Phase breakdown', emoji: '📊',
+    q: 'Show me the breakdown of Pembrolizumab trials by phase',
+    drug: 'Pembrolizumab', cond: '', start: 2010, end: 2024 },
+  { label: 'Lung cancer network', emoji: '🕸',
+    q: 'Show the sponsor-condition relationship network for lung cancer',
+    drug: '', cond: 'lung cancer', start: 2015, end: 2024 },
+  { label: 'Top sponsors', emoji: '🏥',
+    q: 'Who are the top sponsors running diabetes clinical trials?',
+    drug: '', cond: 'diabetes', start: 2015, end: 2024 },
+  { label: 'Enrollment distribution', emoji: '👥',
+    q: 'What is the distribution of enrollment sizes for breast cancer trials?',
+    drug: '', cond: 'breast cancer', start: 2015, end: 2024 },
+  { label: 'Alzheimer status', emoji: '🔬',
+    q: "What is the current status breakdown of Alzheimer's disease trials?",
+    drug: '', cond: "Alzheimer's disease", start: 2015, end: 2024 },
+];
+
+const wrap = document.getElementById('examples-wrap');
+EXAMPLES.forEach(ex => {
+  const b = document.createElement('button');
+  b.className = 'ex-btn';
+  b.innerHTML = `<span>${ex.emoji}</span>${ex.label}`;
+  b.onclick = () => applyExample(ex);
+  wrap.appendChild(b);
+});
+
+function applyExample(ex) {
+  document.getElementById('query-input').value = ex.q;
+  document.getElementById('f-drug').value    = ex.drug || '';
+  document.getElementById('f-cond').value    = ex.cond || '';
+  document.getElementById('f-sponsor').value = '';
+  document.getElementById('f-phase').value   = '';
+  document.getElementById('f-country').value = '';
+  document.getElementById('f-start').value   = ex.start;
+  document.getElementById('f-end').value     = ex.end;
+  if (ex.drug || ex.cond) {
+    document.getElementById('adv-panel').style.display = 'block';
+    document.getElementById('adv-arrow').textContent = '▲';
+  }
+  runQuery();
+}
+
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+function toggleAdv() {
+  const p = document.getElementById('adv-panel');
+  const a = document.getElementById('adv-arrow');
+  const open = p.style.display !== 'none';
+  p.style.display = open ? 'none' : 'block';
+  a.textContent   = open ? '▼'    : '▲';
+}
+
+function toggleJson() {
+  const b = document.getElementById('json-body');
+  const a = document.getElementById('json-arrow');
+  const open = b.style.display !== 'none';
+  b.style.display = open ? 'none' : 'block';
+  a.textContent   = open ? '▶'    : '▼';
+}
+
+document.getElementById('query-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runQuery();
+});
+
+// ─── Query execution ──────────────────────────────────────────────────────────
+let _zoom = null, _svgSel = null;
+
+async function runQuery() {
+  const btn  = document.getElementById('run-btn');
+  const icon = document.getElementById('btn-icon');
+  const text = document.getElementById('btn-text');
+  const hint = document.getElementById('submit-hint');
+  const errEl = document.getElementById('error-box');
+
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  icon.innerHTML = '<div class="spinner"></div>';
+  text.textContent = 'Querying…';
+  hint.textContent = 'Time series queries may take 10–30 s (parallel API calls)';
+
+  const t0 = Date.now();
+  const payload = {
+    query:       document.getElementById('query-input').value.trim(),
+    drug_name:   document.getElementById('f-drug').value.trim()    || null,
+    condition:   document.getElementById('f-cond').value.trim()    || null,
+    sponsor:     document.getElementById('f-sponsor').value.trim() || null,
+    trial_phase: document.getElementById('f-phase').value          || null,
+    country:     document.getElementById('f-country').value.trim() || null,
+    start_year:  parseInt(document.getElementById('f-start').value) || null,
+    end_year:    parseInt(document.getElementById('f-end').value)   || null,
+  };
+
+  try {
+    const res = await fetch('/visualize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail || `HTTP ${res.status}`); }
+    const data = await res.json();
+    renderResults(data, elapsed);
+    document.getElementById('info-card').style.display = 'none';
+  } catch (err) {
+    errEl.style.display = 'block';
+    errEl.innerHTML = `<strong>Error:</strong> ${err.message}`;
+  } finally {
+    btn.disabled = false;
+    icon.textContent = '→';
+    text.textContent = 'Run Query';
+    hint.textContent = '';
+  }
+}
+
+// ─── Render results ───────────────────────────────────────────────────────────
+function renderResults(data, elapsed) {
+  const viz  = data.visualization || {};
+  const meta = data.meta || {};
+
+  const resultsEl = document.getElementById('results');
+  resultsEl.style.display = 'block';
+  setTimeout(() => resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+
+  document.getElementById('chart-title').textContent = viz.title || '';
+  const note = meta.note || '';
+  document.getElementById('chart-subtitle').textContent = note;
+
+  renderMetaBar(meta, elapsed);
+
+  // Reset chart area
+  document.getElementById('chart-vl').innerHTML = '';
+  const d3El = document.getElementById('chart-d3');
+  d3El.style.display = 'none';
+  // clear old D3 content but keep overlay + tooltip
+  d3El.querySelectorAll('svg').forEach(s => s.remove());
+  document.getElementById('net-legend').style.display = 'none';
+
+  const vizData = viz.data;
+  const isEmpty = meta.empty_result
+    || !vizData
+    || (Array.isArray(vizData) && vizData.length === 0)
+    || (vizData && vizData.nodes && vizData.nodes.length === 0);
+
+  if (isEmpty) {
+    document.getElementById('chart-vl').innerHTML = `
+      <div style="padding:60px 20px;text-align:center;color:var(--muted)">
+        <div style="font-size:36px;margin-bottom:12px">🔍</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px">No results found</div>
+        <div style="font-size:13px">${meta.empty_reason || 'No studies matched your filters. Try broadening your search terms.'}</div>
+      </div>`;
+  } else if (viz.type === 'network_graph') {
+    d3El.style.display = 'block';
+    renderNetworkGraph(viz);
+    document.getElementById('net-legend').style.display = 'flex';
+  } else {
+    const spec = buildVegaSpec(viz);
+    if (spec) {
+      vegaEmbed('#chart-vl', spec, { actions: false, renderer: 'svg' })
+        .catch(console.error);
+    } else {
+      document.getElementById('chart-vl').innerHTML =
+        `<div style="padding:40px;text-align:center;color:var(--muted)">
+           Unsupported visualization type: <strong>${viz.type}</strong>
+         </div>`;
+    }
+  }
+
+  // JSON
+  document.getElementById('json-pre').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('json-body').style.display = 'none';
+  document.getElementById('json-arrow').textContent = '▶';
+}
+
+function renderMetaBar(meta, elapsed) {
+  // ── Prominent AI banner ──
+  const banner = document.getElementById('ai-banner');
+  if (meta.llm_used) {
+    banner.className = 'is-ai';
+    banner.innerHTML = `
+      <span class="ai-pill">🤖 AI Generated</span>
+      <span class="ai-desc">
+        Visualization intent and filters interpreted by <strong>${meta.llm_model || 'GPT-4o'}</strong>
+      </span>`;
+  } else {
+    banner.className = 'is-heur';
+    const heurDesc = meta.llm_error
+      ? `LLM error: <em>${meta.llm_error}</em> — fell back to keyword heuristics`
+      : `Intent detected by keyword heuristics — set <code>OPENAI_API_KEY</code> in <code>.env</code> to enable AI`;
+    banner.innerHTML = `
+      <span class="ai-pill">⚡ Not AI Generated</span>
+      <span class="ai-desc">${heurDesc}</span>`;
+  }
+
+  // ── Small detail badges ──
+  const bar = document.getElementById('meta-bar');
+  let html = '';
+
+  if (meta.parsed_intent) {
+    html += `<span class="badge b-intent">📐 ${meta.parsed_intent.replace(/_/g, ' ')}</span>`;
+  }
+
+  html += `<span class="badge b-source">📡 clinicaltrials.gov</span>`;
+
+  const filters = meta.filters || {};
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v) html += `<span class="badge b-filter">${k.replace(/_/g,' ')}: ${v}</span>`;
+  });
+
+  html += `<span class="meta-time">⏱ ${elapsed}s</span>`;
+  bar.innerHTML = html;
+}
+
+// ─── Vega-Lite spec builders ──────────────────────────────────────────────────
+function buildVegaSpec(viz) {
+  if (!viz || !viz.data) return null;
+  const enc = viz.encoding || {};
+  const xF = enc.x && enc.x.field;
+  const yF = enc.y && enc.y.field;
+  const xT = (enc.x && enc.x.title) || xF;
+  const yT = (enc.y && enc.y.title) || yF;
+
+  const base = {
+    $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+    width:   'container',
+    height:  380,
+    data:    { values: viz.data },
+    config: {
+      view:  { stroke: null },
+      axis:  { labelFont: 'system-ui', titleFont: 'system-ui', gridColor: '#e2e8f0' },
+      bar:   { continuousBandSize: 20 },
+    },
+  };
+
+  // ── Time series ──
+  if (viz.type === 'time_series') {
+    const values = viz.data.map(d => ({ ...d, _d: String(d[xF]) + '-06-15' }));
+    return {
+      ...base,
+      data: { values },
+      layer: [
+        {
+          mark: { type: 'area', color: '#2563eb', opacity: 0.07 },
+          encoding: {
+            x: { field: '_d', type: 'temporal', title: xT, axis: { format: '%Y', tickCount: { interval: 'year' } } },
+            y: { field: yF, type: 'quantitative', title: yT },
+          },
+        },
+        {
+          mark: { type: 'line', color: '#2563eb', strokeWidth: 2.5,
+                  point: { filled: true, size: 55, color: '#2563eb' } },
+          encoding: {
+            x: { field: '_d', type: 'temporal', title: xT, axis: { format: '%Y' } },
+            y: { field: yF, type: 'quantitative', title: yT },
+            tooltip: [
+              { field: '_d', type: 'temporal', title: xT, format: '%Y' },
+              { field: yF,  type: 'quantitative', title: yT },
+            ],
+          },
+        },
+      ],
+    };
+  }
+
+  // ── Bar / Histogram ──
+  if (viz.type === 'bar_chart' || viz.type === 'histogram') {
+    const xType = (enc.x && enc.x.type) || 'nominal';
+    const yType = (enc.y && enc.y.type) || 'quantitative';
+    const isHoriz = xType === 'quantitative' && yType === 'nominal';
+
+    if (isHoriz) {
+      return {
+        ...base,
+        mark: { type: 'bar', color: '#2563eb', cornerRadiusEnd: 3 },
+        encoding: {
+          x: { field: xF, type: 'quantitative', title: xT },
+          y: { field: yF, type: 'nominal', title: yT, sort: '-x' },
+          color: {
+            field: xF, type: 'quantitative',
+            scale: { scheme: 'blues', reverse: false },
+            legend: null,
+          },
+          tooltip: [
+            { field: yF, type: 'nominal', title: yT },
+            { field: xF, type: 'quantitative', title: xT },
+          ],
+        },
+      };
+    }
+
+    return {
+      ...base,
+      mark: { type: 'bar', color: '#2563eb', cornerRadiusEnd: 3 },
+      encoding: {
+        x: { field: xF, type: xType, title: xT, sort: (enc.x && enc.x.sort) || null,
+             axis: { labelAngle: -35, labelLimit: 140 } },
+        y: { field: yF, type: yType, title: yT },
+        color: {
+          field: yF, type: 'quantitative',
+          scale: { scheme: 'blues' },
+          legend: null,
+        },
+        tooltip: [
+          { field: xF, type: xType, title: xT },
+          { field: yF, type: yType, title: yT },
+        ],
+      },
+    };
+  }
+
+  return null;
+}
+
+// ─── D3 Force-directed network graph ─────────────────────────────────────────
+function renderNetworkGraph(viz) {
+  const container = document.getElementById('chart-d3');
+  const tooltip   = document.getElementById('d3-tooltip');
+  const W = container.clientWidth  || 860;
+  const H = 500;
+
+  const allNodes = (viz.data && viz.data.nodes) || [];
+  const allEdges = (viz.data && viz.data.edges) || [];
+
+  // Compute degree for each node
+  const deg = {};
+  allEdges.forEach(e => {
+    deg[e.source] = (deg[e.source] || 0) + 1;
+    deg[e.target] = (deg[e.target] || 0) + 1;
+  });
+
+  // Keep top 90 nodes by degree
+  const nodes = allNodes
+    .slice()
+    .sort((a, b) => (deg[b.id] || 0) - (deg[a.id] || 0))
+    .slice(0, 90)
+    .map(n => ({ ...n }));
+
+  const nodeSet = new Set(nodes.map(n => n.id));
+  const edges = allEdges
+    .filter(e => nodeSet.has(e.source) && nodeSet.has(e.target))
+    .sort((a, b) => (b.weight || 1) - (a.weight || 1))
+    .slice(0, 160)
+    .map(e => ({ ...e }));
+
+  const maxW = Math.max(...edges.map(e => e.weight || 1), 1);
+
+  const typeColor = { sponsor: '#2563eb', condition: '#059669', drug: '#d97706' };
+  const defaultColor = '#94a3b8';
+
+  const svg = d3.select('#chart-d3')
+    .append('svg')
+    .attr('width', W)
+    .attr('height', H);
+
+  const g = svg.append('g');
+
+  _zoom = d3.zoom()
+    .scaleExtent([0.15, 5])
+    .on('zoom', e => g.attr('transform', e.transform));
+  _svgSel = svg;
+  svg.call(_zoom);
+
+  // Edges
+  const link = g.append('g').selectAll('line')
+    .data(edges).join('line')
+    .attr('stroke', '#cbd5e1')
+    .attr('stroke-width', d => 0.5 + (d.weight / maxW) * 3.5)
+    .attr('stroke-opacity', 0.65);
+
+  // Nodes
+  const node = g.append('g').selectAll('circle')
+    .data(nodes).join('circle')
+    .attr('r', d => 5 + Math.min((deg[d.id] || 0) * 0.9, 12))
+    .attr('fill', d => typeColor[d.type] || defaultColor)
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 1.5)
+    .style('cursor', 'pointer')
+    .on('mouseover', (event, d) => {
+      tooltip.style.opacity = 1;
+      tooltip.innerHTML = `<strong>${d.label}</strong><br>
+        <span style="opacity:.7">${d.type} · ${deg[d.id] || 0} link${(deg[d.id]||0)===1?'':'s'}</span>`;
+    })
+    .on('mousemove', event => {
+      const r = container.getBoundingClientRect();
+      tooltip.style.left = (event.clientX - r.left + 14) + 'px';
+      tooltip.style.top  = (event.clientY - r.top  - 36) + 'px';
+    })
+    .on('mouseleave', () => { tooltip.style.opacity = 0; })
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end',   (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; })
+    );
+
+  // Labels only for nodes with degree ≥ 3
+  const label = g.append('g').selectAll('text')
+    .data(nodes.filter(n => (deg[n.id] || 0) >= 3))
+    .join('text')
+    .text(d => d.label.length > 26 ? d.label.slice(0, 24) + '…' : d.label)
+    .attr('font-size', 10)
+    .attr('font-family', 'system-ui')
+    .attr('fill', '#334155')
+    .attr('pointer-events', 'none')
+    .attr('dx', 11).attr('dy', 3);
+
+  // Simulation
+  const sim = d3.forceSimulation(nodes)
+    .force('link',      d3.forceLink(edges).id(d => d.id).distance(80).strength(0.25))
+    .force('charge',    d3.forceManyBody().strength(-130))
+    .force('center',    d3.forceCenter(W / 2, H / 2))
+    .force('collision', d3.forceCollide().radius(d => 7 + Math.min((deg[d.id]||0)*.9, 12) + 3));
+
+  sim.on('tick', () => {
+    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    node.attr('cx', d => d.x).attr('cy', d => d.y);
+    label.attr('x', d => d.x).attr('y', d => d.y);
+  });
+}
+
+function resetZoom() {
+  if (_svgSel && _zoom) {
+    _svgSel.transition().duration(450).call(_zoom.transform, d3.zoomIdentity);
+  }
+}
+</script>
+</body>
+</html>

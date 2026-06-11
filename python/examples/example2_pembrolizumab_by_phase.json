@@ -1,0 +1,34 @@
+{
+  "request": {
+    "query": "Show trials by phase for Pembrolizumab",
+    "drug_name": "Pembrolizumab"
+  },
+  "response": {
+    "visualization": {
+      "type": "bar_chart",
+      "title": "Trials by Phase — Pembrolizumab",
+      "encoding": {
+        "x": { "field": "phase",       "type": "nominal",      "title": "Phase" },
+        "y": { "field": "trial_count", "type": "quantitative", "title": "Number of Trials" }
+      },
+      "data": [
+        { "phase": "PHASE2",          "trial_count": 487 },
+        { "phase": "PHASE3",          "trial_count": 271 },
+        { "phase": "PHASE1 / PHASE2", "trial_count": 214 },
+        { "phase": "PHASE1",          "trial_count": 189 },
+        { "phase": "PHASE2 / PHASE3", "trial_count": 43  },
+        { "phase": "PHASE4",          "trial_count": 31  },
+        { "phase": "N/A",             "trial_count": 12  }
+      ]
+    },
+    "meta": {
+      "source": "clinicaltrials.gov",
+      "llm_used": false,
+      "llm_model": null,
+      "parsed_intent": "phase_breakdown",
+      "filters": {
+        "drug_name": "Pembrolizumab"
+      }
+    }
+  }
+}

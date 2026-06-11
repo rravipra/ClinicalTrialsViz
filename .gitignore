@@ -1,0 +1,23 @@
+# secrets — never commit real keys
+python/.env
+.env
+
+# virtual environment
+python/.venv/
+.venv/
+
+# runtime logs
+python/server.log
+*.log
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Claude Code session data
+.claude/
+
+# macOS
+.DS_Store

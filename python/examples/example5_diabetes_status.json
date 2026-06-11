@@ -1,0 +1,35 @@
+{
+  "request": {
+    "query": "What is the current status of diabetes clinical trials?",
+    "condition": "Diabetes"
+  },
+  "response": {
+    "visualization": {
+      "type": "bar_chart",
+      "title": "Trial Status Breakdown — Diabetes",
+      "encoding": {
+        "x": { "field": "count",  "type": "quantitative", "title": "Number of Trials" },
+        "y": { "field": "status", "type": "nominal",      "title": "Status", "sort": "-x" }
+      },
+      "data": [
+        { "status": "COMPLETED",            "count": 4823 },
+        { "status": "RECRUITING",           "count": 1947 },
+        { "status": "ACTIVE_NOT_RECRUITING","count": 612  },
+        { "status": "NOT_YET_RECRUITING",   "count": 387  },
+        { "status": "TERMINATED",           "count": 334  },
+        { "status": "WITHDRAWN",            "count": 118  },
+        { "status": "SUSPENDED",            "count": 43   },
+        { "status": "UNKNOWN",              "count": 29   }
+      ]
+    },
+    "meta": {
+      "source": "clinicaltrials.gov",
+      "llm_used": true,
+      "llm_model": "gpt-4o",
+      "parsed_intent": "status_breakdown",
+      "filters": {
+        "condition": "Diabetes"
+      }
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "request": {
+    "query": "Build a sponsor-condition network for lung cancer",
+    "condition": "Lung Cancer"
+  },
+  "response": {
+    "visualization": {
+      "type": "network_graph",
+      "title": "Sponsor–Condition Network — Lung Cancer",
+      "encoding": {
+        "node_id":     "id",
+        "node_label":  "label",
+        "node_type":   "type",
+        "edge_source": "source",
+        "edge_target": "target",
+        "edge_weight": "weight"
+      },
+      "data": {
+        "nodes": [
+          { "id": "s:AstraZeneca",                    "label": "AstraZeneca",                    "type": "sponsor" },
+          { "id": "s:Hoffmann-La Roche",              "label": "Hoffmann-La Roche",              "type": "sponsor" },
+          { "id": "s:Merck Sharp & Dohme LLC",        "label": "Merck Sharp & Dohme LLC",        "type": "sponsor" },
+          { "id": "s:Bristol-Myers Squibb",           "label": "Bristol-Myers Squibb",           "type": "sponsor" },
+          { "id": "s:National Cancer Institute (NCI)","label": "National Cancer Institute (NCI)","type": "sponsor" },
+          { "id": "c:Lung Cancer",                    "label": "Lung Cancer",                    "type": "condition" },
+          { "id": "c:Non-Small Cell Lung Cancer",     "label": "Non-Small Cell Lung Cancer",     "type": "condition" },
+          { "id": "c:Small Cell Lung Cancer",         "label": "Small Cell Lung Cancer",         "type": "condition" },
+          { "id": "c:Carcinoma",                      "label": "Carcinoma",                      "type": "condition" },
+          { "id": "d:Osimertinib",                    "label": "Osimertinib",                    "type": "drug" },
+          { "id": "d:Pembrolizumab",                  "label": "Pembrolizumab",                  "type": "drug" },
+          { "id": "d:Nivolumab",                      "label": "Nivolumab",                      "type": "drug" },
+          { "id": "d:Carboplatin",                    "label": "Carboplatin",                    "type": "drug" },
+          { "id": "d:Atezolizumab",                   "label": "Atezolizumab",                   "type": "drug" }
+        ],
+        "edges": [
+          { "source": "s:AstraZeneca",                    "target": "c:Non-Small Cell Lung Cancer", "weight": 48 },
+          { "source": "s:AstraZeneca",                    "target": "c:Lung Cancer",                "weight": 31 },
+          { "source": "s:AstraZeneca",                    "target": "d:Osimertinib",                "weight": 29 },
+          { "source": "s:Hoffmann-La Roche",              "target": "c:Non-Small Cell Lung Cancer", "weight": 37 },
+          { "source": "s:Hoffmann-La Roche",              "target": "c:Lung Cancer",                "weight": 24 },
+          { "source": "s:Hoffmann-La Roche",              "target": "d:Atezolizumab",               "weight": 21 },
+          { "source": "s:Merck Sharp & Dohme LLC",        "target": "c:Non-Small Cell Lung Cancer", "weight": 42 },
+          { "source": "s:Merck Sharp & Dohme LLC",        "target": "c:Small Cell Lung Cancer",     "weight": 18 },
+          { "source": "s:Merck Sharp & Dohme LLC",        "target": "d:Pembrolizumab",              "weight": 38 },
+          { "source": "s:Bristol-Myers Squibb",           "target": "c:Lung Cancer",                "weight": 29 },
+          { "source": "s:Bristol-Myers Squibb",           "target": "c:Non-Small Cell Lung Cancer", "weight": 33 },
+          { "source": "s:Bristol-Myers Squibb",           "target": "d:Nivolumab",                  "weight": 27 },
+          { "source": "s:National Cancer Institute (NCI)","target": "c:Lung Cancer",                "weight": 67 },
+          { "source": "s:National Cancer Institute (NCI)","target": "c:Non-Small Cell Lung Cancer", "weight": 54 },
+          { "source": "s:National Cancer Institute (NCI)","target": "c:Small Cell Lung Cancer",     "weight": 22 },
+          { "source": "s:National Cancer Institute (NCI)","target": "c:Carcinoma",                  "weight": 15 },
+          { "source": "s:National Cancer Institute (NCI)","target": "d:Carboplatin",                "weight": 19 }
+        ]
+      }
+    },
+    "meta": {
+      "source": "clinicaltrials.gov",
+      "llm_used": false,
+      "llm_model": null,
+      "llm_error": null,
+      "parsed_intent": "network_graph",
+      "filters": {
+        "condition": "Lung Cancer"
+      },
+      "note": "Blue = sponsors · Green = conditions · Orange = drugs/interventions. Edge weight = shared study count."
+    }
+  }
+}

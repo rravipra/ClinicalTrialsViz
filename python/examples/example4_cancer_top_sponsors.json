@@ -1,0 +1,42 @@
+{
+  "request": {
+    "query": "Which organizations sponsor the most cancer trials?",
+    "condition": "Cancer"
+  },
+  "response": {
+    "visualization": {
+      "type": "bar_chart",
+      "title": "Top Sponsors — Cancer",
+      "encoding": {
+        "x": { "field": "count",   "type": "quantitative", "title": "Number of Trials" },
+        "y": { "field": "sponsor", "type": "nominal",      "title": "Sponsor", "sort": "-x" }
+      },
+      "data": [
+        { "sponsor": "National Cancer Institute (NCI)",    "count": 1847 },
+        { "sponsor": "Hoffmann-La Roche",                  "count": 1243 },
+        { "sponsor": "Merck Sharp & Dohme LLC",            "count": 1189 },
+        { "sponsor": "AstraZeneca",                        "count": 1056 },
+        { "sponsor": "Pfizer",                             "count": 978  },
+        { "sponsor": "Bristol-Myers Squibb",               "count": 934  },
+        { "sponsor": "Novartis Pharmaceuticals",           "count": 891  },
+        { "sponsor": "Eli Lilly and Company",              "count": 734  },
+        { "sponsor": "Janssen Research & Development, LLC","count": 712  },
+        { "sponsor": "Genentech, Inc.",                    "count": 698  },
+        { "sponsor": "Amgen",                              "count": 645  },
+        { "sponsor": "Boehringer Ingelheim",               "count": 534  },
+        { "sponsor": "GlaxoSmithKline",                    "count": 521  },
+        { "sponsor": "MD Anderson Cancer Center",          "count": 498  },
+        { "sponsor": "Memorial Sloan Kettering Cancer Center","count": 467 }
+      ]
+    },
+    "meta": {
+      "source": "clinicaltrials.gov",
+      "llm_used": true,
+      "llm_model": "gpt-4o",
+      "parsed_intent": "top_sponsors",
+      "filters": {
+        "condition": "Cancer"
+      }
+    }
+  }
+}
