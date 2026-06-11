@@ -723,9 +723,7 @@ function renderMetaBar(meta, elapsed) {
       </span>`;
   } else {
     banner.className = 'is-heur';
-    const heurDesc = meta.llm_error
-      ? `LLM error: <em>${meta.llm_error}</em> — fell back to keyword heuristics`
-      : `Intent detected by keyword heuristics — set <code>OPENAI_API_KEY</code> in <code>.env</code> to enable AI`;
+    const heurDesc = `Intent detected by keyword heuristics — set <code>OPENAI_API_KEY</code> in <code>.env</code> to enable AI`;
     banner.innerHTML = `
       <span class="ai-pill">⚡ Not AI Generated</span>
       <span class="ai-desc">${heurDesc}</span>`;
