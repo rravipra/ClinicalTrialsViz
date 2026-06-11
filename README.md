@@ -204,4 +204,5 @@ See each file for the full `request` and `response` JSON.
 
 -------------
 
-![alt text](image.png)
+<img width="3420" height="1868" alt="image" src="https://github.com/user-attachments/assets/f9b298a1-ff69-4e2b-afef-659473958967" />
+
