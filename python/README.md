@@ -199,9 +199,3 @@ Five example queries with the actual JSON output produced by the system. All out
 | 5 | `example5_diabetes_status.json` | "What is the current status of diabetes clinical trials?" | status_breakdown | Horizontal bar chart |
 
 See each file for the full `request` and `response` JSON.
-
-6. UI
-
--------------
-
-![alt text](image.png)
